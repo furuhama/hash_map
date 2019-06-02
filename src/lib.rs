@@ -57,10 +57,6 @@ impl<K, V> HashMap<K, V> where K: Hash + Eq {
         mem::replace(&mut self.buckets, new_buckets);
     }
 
-    fn len(&self) -> usize {
-        self.items
-    }
-
     fn empty(&self) -> bool {
         self.items == 0
     }
