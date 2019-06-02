@@ -76,14 +76,24 @@ mod tests {
 
     #[test]
     fn insert() {
+        // Create new HashMap
         let mut m = HashMap::new();
+        // No item
         assert_eq!(m.items, 0);
+        // Insert
         m.insert(1, 42);
         assert_eq!(m.items, 1);
         assert_eq!(*m.get(1).unwrap(), 42);
+        // Insert another value with existing key
         m.insert(1, 10);
         assert_eq!(m.items, 1);
         assert_eq!(*m.get(1).unwrap(), 10);
+        // Insert another value with new key
+        m.insert(2, 20);
+        assert_eq!(m.items, 2);
+        assert_eq!(*m.get(1).unwrap(), 10);
+        assert_eq!(*m.get(2).unwrap(), 20);
+        assert_eq!(m.get(100), None);
 
         let mut m = HashMap::new();
         assert_eq!(m.items, 0);
@@ -93,6 +103,11 @@ mod tests {
         m.insert("key".to_string(), 10);
         assert_eq!(m.items, 1);
         assert_eq!(*m.get("key".to_string()).unwrap(), 10);
+        m.insert("key2".to_string(), 20);
+        assert_eq!(m.items, 2);
+        assert_eq!(*m.get("key".to_string()).unwrap(), 10);
+        assert_eq!(*m.get("key2".to_string()).unwrap(), 20);
+        assert_eq!(m.get("key100".to_string()), None);
 
         let mut m = HashMap::new();
         assert_eq!(m.items, 0);
@@ -102,5 +117,10 @@ mod tests {
         m.insert("key", 10);
         assert_eq!(m.items, 1);
         assert_eq!(*m.get("key").unwrap(), 10);
+        m.insert("key2", 20);
+        assert_eq!(m.items, 2);
+        assert_eq!(*m.get("key").unwrap(), 10);
+        assert_eq!(*m.get("key2").unwrap(), 20);
+        assert_eq!(m.get("key100"), None);
     }
 }
