@@ -41,6 +41,18 @@ impl<K, V> HashMap<K, V> where K: Hash + Eq {
         None
     }
 
+    pub fn remove(&mut self, key: K) -> Option<V> {
+        let bucket_idx = self.get_bucket_idx(&key);
+        let bucket = &mut self.buckets[bucket_idx];
+        let idx = bucket
+            .iter()
+            .position(|(k, _)| *k == key)?;
+
+        self.items -= 1;
+        bucket.swap_remove(idx);
+        None
+    }
+
     pub fn get(&self, key: K) -> Option<&V> {
         if self.empty() {
             return None;
@@ -143,6 +155,16 @@ mod tests {
         assert_eq!(*m.get(4).unwrap(), 40);
         assert_eq!(*m.get(5).unwrap(), 50);
         assert_eq!(m.get(100), None);
+        // Remove value by key
+        m.remove(3);
+        assert_eq!(m.items, 4);
+        assert_eq!(m.buckets.len(), 8);
+        assert_eq!(*m.get(1).unwrap(), 10);
+        assert_eq!(*m.get(2).unwrap(), 20);
+        assert_eq!(*m.get(4).unwrap(), 40);
+        assert_eq!(*m.get(5).unwrap(), 50);
+        assert_eq!(m.get(3), None);
+        assert_eq!(m.get(100), None);
 
         let mut m = HashMap::new();
         assert_eq!(m.items, 0);
@@ -188,6 +210,15 @@ mod tests {
         assert_eq!(*m.get("key4".to_string()).unwrap(), 40);
         assert_eq!(*m.get("key5".to_string()).unwrap(), 50);
         assert_eq!(m.get("key100".to_string()), None);
+        m.remove("key3".to_string());
+        assert_eq!(m.items, 4);
+        assert_eq!(m.buckets.len(), 8);
+        assert_eq!(*m.get("key".to_string()).unwrap(), 10);
+        assert_eq!(*m.get("key2".to_string()).unwrap(), 20);
+        assert_eq!(*m.get("key4".to_string()).unwrap(), 40);
+        assert_eq!(*m.get("key5".to_string()).unwrap(), 50);
+        assert_eq!(m.get("key3".to_string()), None);
+        assert_eq!(m.get("key100".to_string()), None);
 
         let mut m = HashMap::new();
         assert_eq!(m.items, 0);
@@ -232,6 +263,15 @@ mod tests {
         assert_eq!(*m.get("key3").unwrap(), 30);
         assert_eq!(*m.get("key4").unwrap(), 40);
         assert_eq!(*m.get("key5").unwrap(), 50);
+        assert_eq!(m.get("key100"), None);
+        m.remove("key3");
+        assert_eq!(m.items, 4);
+        assert_eq!(m.buckets.len(), 8);
+        assert_eq!(*m.get("key").unwrap(), 10);
+        assert_eq!(*m.get("key2").unwrap(), 20);
+        assert_eq!(*m.get("key4").unwrap(), 40);
+        assert_eq!(*m.get("key5").unwrap(), 50);
+        assert_eq!(m.get("key3"), None);
         assert_eq!(m.get("key100"), None);
     }
 }
