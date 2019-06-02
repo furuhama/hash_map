@@ -25,6 +25,14 @@ impl<K, V> HashMap<K, V> where K: Hash + Eq {
         let bucket_idx = self.get_bucket_idx(&key);
         let bucket = &mut self.buckets[bucket_idx];
 
+        // if the same key already exists, replace its old value with new value
+        for (k, v) in bucket.iter_mut() {
+            if *k == key {
+                mem::replace(v, value);
+                return None;
+            }
+        }
+
         self.items += 1;
         bucket.push((key, value));
         None
@@ -73,17 +81,26 @@ mod tests {
         m.insert(1, 42);
         assert_eq!(m.items, 1);
         assert_eq!(*m.get(1).unwrap(), 42);
+        m.insert(1, 10);
+        assert_eq!(m.items, 1);
+        assert_eq!(*m.get(1).unwrap(), 10);
 
         let mut m = HashMap::new();
         assert_eq!(m.items, 0);
         m.insert("key".to_string(), 42);
         assert_eq!(m.items, 1);
         assert_eq!(*m.get("key".to_string()).unwrap(), 42);
+        m.insert("key".to_string(), 10);
+        assert_eq!(m.items, 1);
+        assert_eq!(*m.get("key".to_string()).unwrap(), 10);
 
         let mut m = HashMap::new();
         assert_eq!(m.items, 0);
         m.insert("key", 42);
         assert_eq!(m.items, 1);
         assert_eq!(*m.get("key").unwrap(), 42);
+        m.insert("key", 10);
+        assert_eq!(m.items, 1);
+        assert_eq!(*m.get("key").unwrap(), 10);
     }
 }
