@@ -18,7 +18,10 @@ impl<K, V> HashMap<K, V> {
 
 impl<K, V> HashMap<K, V> where K: Hash + Eq {
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
-        if self.empty() {
+        // rehash the HashMap in these cases
+        //   * HashMap has no buckets (Just after HashMap::new())
+        //   * HashMap has items, the number of which is over 75% of the number of buckets
+        if self.empty() || self.items > (3 * self.buckets.len() / 4) {
             self.rehash();
         }
 
@@ -62,6 +65,14 @@ impl<K, V> HashMap<K, V> where K: Hash + Eq {
         let mut new_buckets = Vec::with_capacity(size);
         new_buckets.extend((0..size).map(|_| Vec::new()));
 
+        // set again existing key-value pairs to new buckets
+        for (key, value) in self.buckets.iter_mut().flat_map(|bucket| bucket.drain(..)) {
+            let mut hasher = DefaultHasher::new();
+            key.hash(&mut hasher);
+            let idx = (hasher.finish() % size as u64) as usize;
+            new_buckets[idx].push((key, value))
+        }
+
         mem::replace(&mut self.buckets, new_buckets);
     }
 
@@ -80,45 +91,66 @@ mod tests {
         let mut m = HashMap::new();
         // No item
         assert_eq!(m.items, 0);
+        assert_eq!(m.buckets.len(), 0);
+        assert_eq!(m.get(100), None);
         // Insert
         m.insert(1, 42);
         assert_eq!(m.items, 1);
+        assert_eq!(m.buckets.len(), 1);
         assert_eq!(*m.get(1).unwrap(), 42);
+        assert_eq!(m.get(100), None);
         // Insert another value with existing key
         m.insert(1, 10);
         assert_eq!(m.items, 1);
+        assert_eq!(m.buckets.len(), 2);
         assert_eq!(*m.get(1).unwrap(), 10);
+        assert_eq!(m.get(100), None);
         // Insert another value with new key
         m.insert(2, 20);
         assert_eq!(m.items, 2);
+        assert_eq!(m.buckets.len(), 2);
         assert_eq!(*m.get(1).unwrap(), 10);
         assert_eq!(*m.get(2).unwrap(), 20);
         assert_eq!(m.get(100), None);
 
         let mut m = HashMap::new();
         assert_eq!(m.items, 0);
+        assert_eq!(m.buckets.len(), 0);
+        assert_eq!(m.get("key100".to_string()), None);
         m.insert("key".to_string(), 42);
         assert_eq!(m.items, 1);
+        assert_eq!(m.buckets.len(), 1);
         assert_eq!(*m.get("key".to_string()).unwrap(), 42);
+        assert_eq!(m.get("key100".to_string()), None);
         m.insert("key".to_string(), 10);
         assert_eq!(m.items, 1);
+        assert_eq!(m.buckets.len(), 2);
         assert_eq!(*m.get("key".to_string()).unwrap(), 10);
+        assert_eq!(m.get("key100".to_string()), None);
         m.insert("key2".to_string(), 20);
         assert_eq!(m.items, 2);
+        assert_eq!(m.buckets.len(), 2);
         assert_eq!(*m.get("key".to_string()).unwrap(), 10);
         assert_eq!(*m.get("key2".to_string()).unwrap(), 20);
         assert_eq!(m.get("key100".to_string()), None);
 
         let mut m = HashMap::new();
         assert_eq!(m.items, 0);
+        assert_eq!(m.buckets.len(), 0);
+        assert_eq!(m.get("key100"), None);
         m.insert("key", 42);
         assert_eq!(m.items, 1);
+        assert_eq!(m.buckets.len(), 1);
         assert_eq!(*m.get("key").unwrap(), 42);
+        assert_eq!(m.get("key100"), None);
         m.insert("key", 10);
         assert_eq!(m.items, 1);
+        assert_eq!(m.buckets.len(), 2);
         assert_eq!(*m.get("key").unwrap(), 10);
+        assert_eq!(m.get("key100"), None);
         m.insert("key2", 20);
         assert_eq!(m.items, 2);
+        assert_eq!(m.buckets.len(), 2);
         assert_eq!(*m.get("key").unwrap(), 10);
         assert_eq!(*m.get("key2").unwrap(), 20);
         assert_eq!(m.get("key100"), None);
