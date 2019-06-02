@@ -42,6 +42,10 @@ impl<K, V> HashMap<K, V> where K: Hash + Eq {
     }
 
     pub fn get(&self, key: K) -> Option<&V> {
+        if self.empty() {
+            return None;
+        }
+
         let bucket_idx = self.get_bucket_idx(&key);
 
         self.buckets[bucket_idx]
